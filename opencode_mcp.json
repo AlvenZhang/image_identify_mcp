@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "image-identify": {
+      "command": "uv",
+      "args": ["--directory", "/Users/alven/code/image_identify_mcp", "run", "python", "server.py"],
+      "env": {}
+    }
+  }
+}
