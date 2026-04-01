@@ -8,6 +8,7 @@ Provides tools to describe images and detect garbled/corrupted text.
 
 import base64
 import os
+from contextlib import contextmanager
 from io import BytesIO
 from pathlib import Path
 
@@ -43,7 +44,7 @@ def warmup():
 def load_image(image_path: str) -> Image.Image:
     """Load image from file path or URL."""
     if image_path.startswith(("http://", "https://")):
-        response = requests.get(image_path)
+        response = requests.get(image_path, timeout=10)
         response.raise_for_status()
         return Image.open(BytesIO(response.content))
     else:
@@ -51,6 +52,16 @@ def load_image(image_path: str) -> Image.Image:
         if not path.exists():
             raise FileNotFoundError(f"Image not found: {image_path}")
         return Image.open(path)
+
+
+@contextmanager
+def open_image(image_path: str):
+    """Context manager for proper PIL Image resource cleanup."""
+    image = load_image(image_path)
+    try:
+        yield image
+    finally:
+        image.close()
 
 
 def encode_image_to_base64(image: Image.Image) -> str:
@@ -62,16 +73,19 @@ def encode_image_to_base64(image: Image.Image) -> str:
 
 def describe_image_with_ollama(image_path: str, prompt: str) -> str:
     """Send image to Ollama vision model and get description."""
-    image = load_image(image_path)
-    image_base64 = encode_image_to_base64(image)
+    with open_image(image_path) as image:
+        image_base64 = encode_image_to_base64(image)
 
-    response = ollama_client.generate(
-        model=VISION_MODEL,
-        prompt=prompt,
-        images=[image_base64],
-        options={"temperature": 0.3},
-    )
-    return response["response"]
+    try:
+        response = ollama_client.generate(
+            model=VISION_MODEL,
+            prompt=prompt,
+            images=[image_base64],
+            options={"temperature": 0.3},
+        )
+        return response["response"]
+    except ollama.Error as e:
+        raise RuntimeError(f"Ollama error: {e}") from e
 
 
 @mcp.tool()
