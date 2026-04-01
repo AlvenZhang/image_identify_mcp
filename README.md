@@ -1,6 +1,6 @@
 # Image Identify MCP
 
-使用 Ollama vision 模型进行图像识别的 MCP 服务器，供 OpenCode 使用。
+使用 Ollama vision 模型进行图像识别的 MCP 服务器，支持 OpenCode、Claude Code 等所有 MCP 客户端。
 
 ## 环境要求
 
@@ -29,7 +29,7 @@ source .venv/bin/activate
 python server.py
 ```
 
-## OpenCode 配置
+## MCP 客户端配置
 
 在 OpenCode 的配置文件中添加 MCP 服务器。配置文件通常位于：
 - `~/.config/opencode/opencode.json`
